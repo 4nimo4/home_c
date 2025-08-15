@@ -8,6 +8,9 @@ Git практика - обучение
 Добавляем секцию, трерий
 параграф теска.
 
+<<<<<<< HEAD
 fdgdfgdfgdfgdfgdfhfgh
 2fdgdfgdfgdfgdfgdfhfgh
 3fdgdfgdfgdfgdfgdfhfgh
+=======
+>>>>>>> parent of 6c413bd (Добавили строку fdgdfgdfgdfgdfgdfhfgh в файл praktika.txt)
