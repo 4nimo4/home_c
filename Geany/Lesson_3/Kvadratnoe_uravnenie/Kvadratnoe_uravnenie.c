@@ -8,6 +8,8 @@
 #include <stdio.h>
 #include <locale.h>
 #include <math.h>
+#include <tgmath.h>
+
 int main(int argc, char **argv)
 {
 	float a,b,c;
