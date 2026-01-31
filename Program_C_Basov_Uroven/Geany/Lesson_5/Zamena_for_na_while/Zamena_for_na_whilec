@@ -1,0 +1,30 @@
+/*
+ * Zamena_for_na_whilec
+ * 
+	Замена for на while
+	Внимание! В Си всегда возможна замена for на while и наоборот
+ * 	// for гораздо компактнее чем цикл while
+ * 	for(i=1; i<=5; i++)
+ * 		{
+ * 			statement;
+ * 		}
+	
+	// while
+	i=1;
+	while(i<=5)
+	{
+		statement;
+		i++;
+	}
+	
+ */
+
+
+#include <stdio.h>
+
+int main()
+{
+	
+	return 0;
+}
+
