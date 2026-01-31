@@ -1,0 +1,11 @@
+1 Вариант - когда собирается из двух и более файлов.
+
+    gcc -c -o main.o main.c //получение объектного файла main.o из main.c
+    gcc -c -o func.o func.c //получение объектного файла func.o из func.c
+    gcc -o prog main.o func.o //получение исполняемого файла prog из main.и func.o
+    ./prog //Запуск исполняемого файла prog
+
+2 Вариант - короткий.
+
+    gcc main.c -o main
+    ./main
