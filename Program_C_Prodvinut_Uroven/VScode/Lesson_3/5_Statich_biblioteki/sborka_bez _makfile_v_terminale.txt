@@ -1,0 +1,32 @@
+Если сейчас в каталоге только исходники
+/home/mikhail/home_c/Program_C_Prodvinut_Uroven/VScode/Lesson_3/5_Statich_biblioteki
+(main.c, mylib1/lib1.c, mylib1/lib1.h), то можно сделать:
+
+# 1. Скомпилировать main
+cd /home/mikhail/home_c/Program_C_Prodvinut_Uroven/VScode/Lesson_3/5_Statich_biblioteki
+gcc -Wall -Wextra -Wpedantic -std=c11 -Imylib2 -c main.c -o main.o
+
+# 2. Скомпилировать код библиотеки
+gcc -Wall -Imylib1 -c mylib1/lib1.c -o mylib1/lib1.o
+
+# 3. Собрать статическую библиотеку
+ar rcs mylib1/libmy1.a mylib1/lib1.o
+
+# 4. Слить всё в один исполняемый файл
+gcc -o prog main.o -L./mylib1 -lmy1
+
+# 5. Запустить
+./prog
+
+# 6. Очистить 
+# Из каталога 5_Statich_biblioteki
+cd /home/mikhail/home_c/Program_C_Prodvinut_Uroven/VScode/Lesson_3/5_Statich_biblioteki
+
+rm -f *.o prog mylib1/*.o mylib1/libmy1.a
+/*
+Разбор:
+rm -f *.o — удалить все объектные файлы в текущей папке (statich_biblioteki.o).
+rm -f prog — удалить исполняемый файл.
+rm -f mylib1/*.o — удалить объектники библиотеки (mylib1/lib1.o).
+rm -f mylib1/libmy1.a — удалить статическую библиотеку.
+*/

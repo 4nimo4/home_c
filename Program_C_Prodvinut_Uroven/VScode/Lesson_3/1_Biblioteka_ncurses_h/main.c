@@ -47,18 +47,60 @@ GitHub - wmcbrine/PDCurses: A curses library for environments that don't fit the
 // Hello world! в стиле ncurses
 //------------------------------------------------------
 
+1. Установка библиотеки ncurses в Kubuntu
+В Kubuntu (и других Debian/Ubuntu) нужна dev‑версия библиотеки:
+
+sudo apt update
+sudo apt install libncurses5-dev libncursesw5-dev
+libncurses5-dev — основная заголовки и файлы для линковки.
+libncursesw5-dev — версия с поддержкой широких символов (UTF‑8).
+(Сейчас в новых Ubuntu/Kubuntu пакет libncurses5-dev и libncursesw5-dev
+заменён на обобщённый libncurses-dev)
+2. Компиляция из терминала (без Makefile)
+Находясь в папке с файлом Biblioteka_ncurses_h.c:
+
+gcc -Wall Biblioteka_ncurses_h.c -o prog -lncurses
+Разбор команды:
+gcc — компилятор.
+-Wall — включить все основные предупреждения.
+Biblioteka_ncurses_h.c — исходный файл.
+-o prog — имя исполняемого файла (будет создан ./prog).
+-lncurses — при линковке подключить библиотеку ncurses.
+Запуск: ./prog
+
 */
-#include<ncurses.h>
-#include<unistd.h>
+#include <ncurses.h>   // Подключаем библиотеку ncurses для работы с текстовым интерфейсом в терминале
+#include <unistd.h>    // Подключаем unistd.h для функции sleep()
 
 int main() 
 {
+    // Инициализируем режим работы ncurses.
+    // Захватывает экран терминала, подготавливает его для вывода с помощью ncurses.
     initscr();
+
+    // Выводим строку "Hello World !!!" в текущую позицию курсора (по умолчанию в левый верхний угол).
     printw("Hello World !!!");
+
+    // Выводим следующую строку с просьбой нажать клавишу.
+    // \n — перевод строки.
     printw("\nPress any key to continue... ");
-    refresh(); // попробуйте включить и выключить
+
+    // refresh(); 
+    // Функция refresh() обновляет физический экран, отображая весь накопленный вывод.
+    // В ncurses вывод сначала идет во внутренний буфер, а на экран попадает после refresh().
+    // В данном случае вывод всё равно станет виден после getch(), но можно поэкспериментировать:
+    // включить и выключить эту строку, чтобы понять разницу.
+
+    // Делаем паузу в 2 секунды перед ожиданием нажатия клавиши.
     sleep(2);
+
+    // Ожидаем нажатия любой клавиши пользователем.
+    // Программа "зависает" на этом месте, пока пользователь не нажмет клавишу.
     getch();
-    endwin();//gcc -Wall -c "%f"
-    return 0;//gcc -Wall -o "%e" "%f" -lncurses -DNCURSES_STATIC
+
+    // Завершаем режим ncurses, возвращаем терминал в обычное состояние.
+    endwin();
+
+    // Возвращаем 0 — признак успешного завершения программы.
+    return 0;
 }

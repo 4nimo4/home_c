@@ -1,0 +1,36 @@
+Если сейчас в каталоге только исходники 
+/home/mikhail/home_c/Program_C_Prodvinut_Uroven/VScode/Lesson_3/6_Dinamich_biblioteki
+(main.c, mylib2/lib2.c, mylib2/lib2.h), то можно сделать:
+
+# 1. Скомпилировать main
+cd /home/mikhail/home_c/Program_C_Prodvinut_Uroven/VScode/Lesson_3/6_Dinamich_biblioteki
+gcc -Wall -Wextra -Wpedantic -std=c11 -Imylib2 -c main.c -o main.o
+
+# 2. Скомпилировать код библиотеки
+gcc -Wall -Imylib2 -fPIC -c mylib2/lib2.c -o mylib2/lib2.o
+
+# 3. Собрать динамическую библиотеку
+gcc -shared -o mylib2/libmy2.so mylib2/lib2.o
+--------------------------------------------------
+# 4. Слить всё в один исполняемый файл
+gcc -o prog main.o -L./mylib2 -lmy2 -Wl,-rpath,'$ORIGIN/mylib2'
+# -Wl,-rpath,'$ORIGIN/mylib2' это опция для линковщика (-Wl= «передать дальше линковщику»),
+# -rpath,$ORIGIN/mylib2 говорит: «при запуске искать .so в подкаталоге mylib2
+# относительно .самого бинарника».$ORIGIN подставится при запуске.
+-------------------------------------------------
+
+# 5. Запустить
+./prog
+
+# 6. Очистить 
+# Из каталога 5_Statich_biblioteki
+cd /home/mikhail/home_c/Program_C_Prodvinut_Uroven/VScode/Lesson_3/6_Dinamich_biblioteki
+
+rm -f *.o prog mylib2/*.o mylib2/libmy2.so
+/*
+Разбор:
+rm -f main.o
+rm -f mylib2/lib2.o
+rm -f mylib2/libmy2.so
+rm -f prog
+*/
