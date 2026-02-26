@@ -22,124 +22,192 @@ Xi+1 = Xi - (f(Xi) * (Xi - X0)) / (f(Xi) - f(X0))
 
 */
 
-#include <stdio.h>    // ввод-вывод (printf и др.)
-#include <math.h>
+#include <stdio.h>    // стандартный ввод-вывод (printf и др.)
+#include <math.h>     // математические функции: fabs и т.п.
 
-#define ACCURACY 0.0001 //Точность с которой будем делать вычисления
+#define ACCURACY 0.0001 // Требуемая точность поиска корня (ε)
 
-typedef float(*function)(float);
+typedef float(*function)(float); // Удобный тип: указатель на функцию float f(float)
 
 //------------------------------------------------------ 
-// Линейный поиск
+// Линейный поиск (простой перебор точек на отрезке)
 //------------------------------------------------------
-float rootFindLineSearch(float xl, float xr, float eps,function f) 
+float rootFindLineSearch(float xl, float xr, float eps, function f) 
 {
-    float x, minx = xl, nextstep;
-    nextstep = fabs(xr-xl)/(1/eps); //разбиваем на отрезки интервал
-    int stepcount=0;
-    for(x=xl; x<xr; x += nextstep, stepcount++) 
+    float x;
+    float minx = xl;       // Точка, в которой |f(x)| пока минимально
+    float nextstep;
+
+    // Разбиваем интервал [xl, xr] примерно на 1/eps частей.
+    // Пример: eps = 0.0001 → около 10000 шагов.
+    nextstep = fabs(xr - xl) / (1 / eps);
+
+    int stepcount = 0;     // Счётчик шагов
+
+    // Двигаемся по отрезку с шагом nextstep
+    for (x = xl; x < xr; x += nextstep, stepcount++) 
     {
-        if( fabs(f(x)) < fabs(f(minx)) )
+        // Если в текущей точке модуль f(x) меньше, чем в лучшей найденной,
+        // то обновляем minx.
+        if (fabs(f(x)) < fabs(f(minx)))
             minx = x;
     }
-    printf("\nFind root for %d steps\n",stepcount); //статистика
+
+    // Вывод статистики: сколько шагов сделано
+    printf("\nFind root for %d steps\n", stepcount);
+
+    // Возвращаем ту точку, где |f(x)| оказалось минимальным
     return minx;
 }
 //------------------------------------------------------ 
 
-//(-2, -1.5) (-1.5, -1) (-1, -0.5) (-0.5, 0)
+// Целевая функция:
+// f(x) = 8x^4 + 32x^3 + 40x^2 + 16x + 1
+// На интервале (-2, 0) у неё несколько корней.
 float f(float x) 
 {
     return 8*x*x*x*x + 32*x*x*x + 40*x*x + 16*x + 1;
 }
 
-int signF(float x,function f)
+// Вспомогательная функция: знак значения f(x)
+//  0  — если f(x) == 0
+// -1  — если f(x) < 0
+// +1  — если f(x) > 0
+int signF(float x, function f)
 {
-    return f(x)==0 ? 0 : (f(x) < 0 ? -1:+1);
+    return f(x) == 0 ? 0 : (f(x) < 0 ? -1 : +1);
 }
 
 //------------------------------------------------------ 
-// Функция поиска корня методом деления отрезка пополам
+// Метод деления отрезка пополам (бисекция)
 //------------------------------------------------------
 float rootFindDiv(float xl, float xr, float eps, function f) 
 {
-    int stepcount=0; //число шагов
-    float xm;
-    while(fabs(xr-xl)>eps) //вещественный модуль разницы или floatabs
+    int stepcount = 0;   // число шагов
+    float xm;            // середина отрезка
+
+    // Пока длина отрезка больше требуемой точности
+    while (fabs(xr - xl) > eps) 
     { 
         stepcount++;
-        xm=(xl+xr)/2; // середина отрезка
-        if(signF(xl,f) != signF(xm,f)) //если знак отличается
-            xr=xm;
+        xm = (xl + xr) / 2.0f;  // середина отрезка
+
+        // Если знак f(x) в точках xl и xm различен —
+        // корень лежит в левом полуинтервале [xl, xm]
+        if (signF(xl, f) != signF(xm, f))
+            xr = xm;
         else
-            xl=xm;
+            // иначе корень в правом полуинтервале [xm, xr]
+            xl = xm;
     }
-    printf("Find root for %d steps\n",stepcount); //статистика
-    return (xl+xr)/2;
+
+    printf("Find root for %d steps\n", stepcount); // статистика
+
+    // В конце xl и xr очень близки, берём среднюю точку
+    return (xl + xr) / 2.0f;
 } 
 
 //------------------------------------------------------ 
-// Модифицированная функция поиска корня
+// Модифицированный метод деления отрезка пополам
+// с дополнительной проверкой корня на границах
 //------------------------------------------------------
 float rootFindDiv2(float xl, float xr, float eps, function f)
 {
-    int stepcount=0; //число шагов
-    float xm;
-    while(fabs(xr-xl)>eps) //вещественный модуль разницы
+    int stepcount = 0;   // число шагов
+    float xm;            // середина отрезка
+
+    while (fabs(xr - xl) > eps) 
     {
         stepcount++;
-        xm=(xl+xr)/2; // середина отрезка
-        if(f(xr)==0)  // нашли решение на правой границе
+        xm = (xl + xr) / 2.0f;  // середина отрезка
+
+        // Дополнительные проверки:
+        // Если правая граница уже является точным корнем
+        if (f(xr) == 0)  
         {
-            printf("Find root for %d steps\n",stepcount);
+            printf("Find root for %d steps\n", stepcount);
             return xr;
         }
-        if(f(xl)==0) // нашли решение на левой границе
+
+        // Если левая граница уже является точным корнем
+        if (f(xl) == 0) 
         {
-            printf("Find root for %d steps\n",stepcount);
+            printf("Find root for %d steps\n", stepcount);
             return xl;
         }
-        if(signF(xl,f) != signF(xm,f)) //если знак отличается
-            xr=xm;
+
+        // Основная логика бисекции:
+        // если знак на xl и xm различен — сдвигаем правую границу
+        if (signF(xl, f) != signF(xm, f))
+            xr = xm;
         else
-            xl=xm;
+            // иначе сдвигаем левую границу
+            xl = xm;
     }
-    printf("Find root for %d  steps\n",stepcount); //статистика
-    return (xl+xr)/2;
+
+    printf("Find root for %d  steps\n", stepcount); // статистика
+    return (xl + xr) / 2.0f;
 }
 
 //------------------------------------------------------ 
-// Метод хорд
+// Метод хорд (секущих)
 //------------------------------------------------------
 float rootFindChord(float xl, float xr, float eps, function f)
 {
-    int stepcount=0;
-    while(fabs(xr - xl) > eps) 
+    int stepcount = 0;
+
+    // Итерации продолжаются, пока длина отрезка больше eps
+    while (fabs(xr - xl) > eps) 
     {
+        // Формула метода хорд (секущих).
+        // xl и xr обновляются, используя пересечение хорды с осью Ox.
+        //
+        // Первая строка: сдвигаем xl
         xl = xr - (xr - xl) * f(xr) / (f(xr) - f(xl));
+
+        // Вторая строка: сдвигаем xr
         xr = xl - (xl - xr) * f(xl) / (f(xl) - f(xr));
+
         stepcount++;
     }
-    printf("Find root for %d steps\n",stepcount);
-    return xr;
+
+    printf("Find root for %d steps\n", stepcount); // статистика
+    return xr;  // Возвращаем одно из приближений (xr)
 }
 
 int main(void) 
 {
+    // Набор отрезков, на каждом из которых ищем по одному корню
+    float points[4][2] = {
+        { -2,   -1.5 },
+        { -1.5, -1   },
+        { -1,   -0.5 },
+        { -0.5,  0   }
+    };
 
-    float points[4][2] = {{-2, -1.5},{-1.5, -1},{-1, 0.5},{-0.5, 0}};
-    for(int i=0;i<4;i++)
+    for (int i = 0; i < 4; i++)
     {
-        printf("------------------Root%d----------------------\n",i);
+        printf("------------------Root%d----------------------\n", i);
 
-        printf("Line Search root1 = %f\n", rootFindLineSearch(points[i][0],points[i][1],ACCURACY,f));
-        //Find root for 10011 steps  Line Search root1 = -1.923878
-        printf("Find Div Search root1 = %f\n", rootFindDiv(points[i][0],points[i][1],ACCURACY,f));
-        //Find Div Search root for 13 steps Find Div Search root1 = -1.923859
-        printf("Find Div2 Search root1 = %f\n", rootFindDiv2(points[i][0],points[i][1],ACCURACY,f));
-        //Find root for 13  steps Find Div2 Search root1 = -1.923859
-        printf("Find Chord Search root = %f\n", rootFindChord(points[i][0],points[i][1],0.001,f));
-        //Find root for 5  steps Find Div2 Search root1 = -1.382683
+        // 1. Линейный поиск (очень много шагов, медленно)
+        printf("Line Search root1 = %f\n",
+               rootFindLineSearch(points[i][0], points[i][1], ACCURACY, f));
+        // Пример: Find root for 10011 steps  Line Search root1 ≈ -1.923878
+
+        // 2. Бисекция (деление отрезка пополам)
+        printf("Find Div Search root1 = %f\n",
+               rootFindDiv(points[i][0], points[i][1], ACCURACY, f));
+        // Пример: Find Div Search root for 13 steps  root ≈ -1.923859
+
+        // 3. Модифицированная бисекция с проверкой границ
+        printf("Find Div2 Search root1 = %f\n",
+               rootFindDiv2(points[i][0], points[i][1], ACCURACY, f));
+        // Пример: Find root for 13  steps  root ≈ -1.923859
+
+        // 4. Метод хорд (обычно сходится быстрее бисекции)
+        printf("Find Chord Search root = %f\n",
+               rootFindChord(points[i][0], points[i][1], 0.001, f));
+        // Пример: Find root for 5 steps  root ≈ -1.382683 (для одного из интервалов)
     }
 
     return 0;

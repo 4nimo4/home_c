@@ -24,23 +24,32 @@
 
 */
 
-#include <stdio.h>    // ввод-вывод (printf и др.)
+#include <stdio.h>    // стандартный ввод-вывод (printf и др.)
 #include <math.h>     // fabs и т.п.
 #include <stdlib.h>   // rand, srand, RAND_MAX
 
-#define ACCURACY 1000 //Точность с которой будем делать вычисления
-#define ACCURACY_2 100000 //Точность с которой будем делать вычисления
+#define ACCURACY   1000   // Число разбиений интервала для детерминированных методов
+#define ACCURACY_2 100000 // Число случайных точек для метода Монте-Карло
 
 typedef float(*function)(float);
+// Тип function — указатель на функцию вида float f(float)
 
-//(-2, -1.5) (-1.5, -1) (-1, -0.5) (-0.5, 0)
+
+//------------------------------------------------------ 
+// Интегрируемая функция f(x)
+// f(x) = 8x^4 + 32x^3 + 40x^2 + 16x + 1
+// На интервале (-2, 0) она имеет несколько корней,
+// а здесь используется для вычисления площади под графиком.
+//------------------------------------------------------
 float f(float x) 
 {
     return 8*x*x*x*x + 32*x*x*x + 40*x*x + 16*x + 1;
 }
 
 //------------------------------------------------------ 
-// Для тестового прямоугольника
+// Тестовая функция для проверки методов интегрирования.
+// testf(x) = 2 (постоянная функция).
+// Интеграл по [0, 2] равен 2 * 2 = 4 (площадь прямоугольника 2×2).
 //------------------------------------------------------
 float testf(float x)
 {
@@ -48,88 +57,155 @@ float testf(float x)
 }
 
 //------------------------------------------------------ 
-// Вычисление интеграла методом прямоугольника
+// Вычисление интеграла методом прямоугольников
+// (метод левых прямоугольников).
+//
+// xl, xr — пределы интегрирования
+// n      — число подотрезков (прямоугольников)
+// f      — интегрируемая функция
 //------------------------------------------------------
 float calcIntegralSquare(float xl, float xr, size_t n, function f) 
 {
-    float sum = 0;
-    float h = (xr-xl)/n;
-    for(size_t i=0; i<n; i++) 
+    float sum = 0.0f;
+    float h = (xr - xl) / n;  // ширина одного прямоугольника
+
+    for (size_t i = 0; i < n; i++) 
     {
-        sum += f(xl);
-        xl += h;
+        sum += f(xl); // высота прямоугольника в левой точке
+        xl += h;      // смещение к следующему подотрезку
     }
-    return sum*h;
+
+    return sum * h;   // площадь ≈ сумма высот * ширина
 }
 
 //------------------------------------------------------ 
-// Вычисление интеграла методом трапеций
+// Вычисление интеграла методом трапеций.
+//
+// Каждый отрезок [x, x+h] заменяется трапецией
+// с основаниями f(x) и f(x+h).
+// Площадь одной трапеции: (f(x) + f(x+h)) / 2 * h.
 //------------------------------------------------------
 float calcIntegralTrap(float xl, float xr, size_t n, function f) 
 {
-    float sum = 0;
-    float h = (xr-xl)/n;
-    for(float x=xl+h; x<xr-h; x+=h) 
+    float sum = 0.0f;
+    float h = (xr - xl) / n;
+
+    for (float x = xl + h; x < xr - h; x += h) 
     {
-        sum += 0.5*h*(f(x)+f(x+h));
+        sum += 0.5f * h * (f(x) + f(x + h));
     }
+
     return sum;
 }
 
 //------------------------------------------------------ 
-// Вычисление интеграла по методу Симпсона
+// Вычисление интеграла методом Симпсона.
+//
+// На каждом малом отрезке [x, x+h] интеграл аппроксимируется
+// параболой, проходящей через точки:
+// (x, f(x)), (x + h/2, f(x + h/2)), (x + h, f(x + h)).
+// Формула на шаг: h/6 * [ f(x) + 4*f(середина) + f(x+h) ].
 //------------------------------------------------------
 float calcIntegralSimpson(float xl, float xr, size_t n, function f) 
 {
-    float sum = 0;
-    float h = (xr-xl)/n;
-    for(float x=xl+h; x<xr-h; x+=h) 
+    float sum = 0.0f;
+    float h = (xr - xl) / n;
+
+    for (float x = xl + h; x < xr - h; x += h) 
     {
-        sum += h/6.0*(f(x) + 4.0*f(0.5*(x+x+h)) + f(x+h));
+        float mid = 0.5f * (x + x + h); // середина: x + h/2
+        sum += h / 6.0f * (f(x) + 4.0f * f(mid) + f(x + h));
     }
+
     return sum;
 }
 
 //------------------------------------------------------ 
-// Вычисление интеграла с помощью метода Монте-Карло
+// Вычисление интеграла методом Монте-Карло.
+//
+// xl, xr — границы по x
+// fmax   — верхняя граница по y (максимальное значение функции на интервале,
+//          или заведомая оценка сверху)
+// n      — количество случайных точек
+// f      — функция
+//
+// Идея:
+// 1) Строим прямоугольник, который точно накрывает область под графиком
+//    на [xl, xr]: ширина = |xr - xl|, высота = fmax.
+// 2) Бросаем в этот прямоугольник n случайных точек (x, y), равномерно.
+// 3) Считаем, какая доля точек попала "под график": y < f(x).
+// 4) Умножаем эту долю на площадь прямоугольника → оценка интеграла.
+//
+// Ошибка метода Монте‑Карло убывает примерно как 1/sqrt(n),
+// поэтому даже при n = 100000 точность всё равно хуже,
+// чем у детерминированных методов с тем же "количеством шагов".
 //------------------------------------------------------
 float calcIntegralMonteCarlo(float xl, float xr, float fmax, size_t n, function f) 
 {
-    size_t in_d = 0;
-    float width = fabs(xr-xl), height = fmax;
-    for(size_t i=0; i<n; i++) 
+    size_t in_d = 0;                  // сколько точек попало "под" график
+    float width  = fabs(xr - xl);     // ширина прямоугольника
+    float height = fmax;              // высота прямоугольника
+
+    for (size_t i = 0; i < n; i++) 
     {
-        float x = ((float)rand()/(float)RAND_MAX) * width - fabs(xl);
-        float y = (float)rand()/(float)RAND_MAX * height;
-        if(y<f(x))
+        // Случайное x по оси X в пределах [xl, xr].
+        // (rand()/RAND_MAX даёт [0,1], умножаем на width и сдвигаем к xl)
+        float x = (float)rand() / (float)RAND_MAX * width + xl;
+
+        // Случайное y по оси Y в пределах [0, fmax]
+        float y = (float)rand() / (float)RAND_MAX * height;
+
+        // Если точка попала под график (y < f(x)), учитываем её
+        if (y < f(x))
             in_d++;
     }
-    return fabs( (float)in_d / n * width * height );
+
+    // Оценка интеграла: доля попавших под график * площадь прямоугольника
+    return fabs((float)in_d / n * width * height);
 }
 
 int main(void) 
 {
+    // Чтобы результаты Монте‑Карло можно было повторять, можно задать seed:
+    // srand(0); // или srand(time(NULL)); для разных запусков
 
-    printf("calcIntegralSquare integral %f\n", calcIntegralSquare(0,2,ACCURACY,testf));
-        //Тестовая функция для проверки точности вычисления площади квадрата
-        //со сторонами 2 х 2 = 4
-        //calcIntegralSquare integral 4.000000
-        /*
-        float testf(float x) вот эта часть кода
+    // 1. Тест: интеграл от testf(x) = 2 по [0, 2] (правильный ответ — 4)
+    printf("calcIntegralSquare integral %f\n",
+           calcIntegralSquare(0, 2, ACCURACY, testf));
+    // calcIntegralSquare integral 4.000000
+
+    /*
+        Тестовая функция:
+
+        float testf(float x)
         {
             return 2;
         }
-        */
-    printf("calcIntegralSquare = %f\n", calcIntegralSquare(-1.382683,-0.617316,ACCURACY,f));
-        //calcIntegralSquare = 0.492744 - площадь половины лепестка синусоиды
-        //выше оси абцисс
-    printf("calcIntegralTrap = %f\n", calcIntegralTrap(-1.382683,-0.617316,ACCURACY,f));
-        //calcIntegralTrap = 0.492743
-    printf("calcIntegralSimpson = %f\n", calcIntegralSimpson(-1.382683,-0.617316,ACCURACY,f));
-        //calcIntegralSimpson = 0.492743
-    printf("calcIntegralMonteCarlo = %f\n", calcIntegralMonteCarlo(-1.382683,-0.617316,1,ACCURACY_2,f));
-        //calcIntegralMonteCarlo = 0.494190
-        //- точность гораздо хуже хотя ACCURACY_2 = 100000, а не 1000 как в других выриантах
-    
+
+        Её интеграл по [0, 2] равен 4 — площадь прямоугольника 2×2.
+    */
+
+    // 2. Интеграл f(x) на отрезке [-1.382683, -0.617316]
+    // (площадь "половины лепестка синусоиды" выше оси Ox).
+    printf("calcIntegralSquare = %f\n",
+           calcIntegralSquare(-1.382683, -0.617316, ACCURACY, f));
+    // calcIntegralSquare = 0.492744
+
+    printf("calcIntegralTrap = %f\n",
+           calcIntegralTrap(-1.382683, -0.617316, ACCURACY, f));
+    // calcIntegralTrap = 0.492743
+
+    printf("calcIntegralSimpson = %f\n",
+           calcIntegralSimpson(-1.382683, -0.617316, ACCURACY, f));
+    // calcIntegralSimpson = 0.492743
+
+    // 3. Оценка того же интеграла методом Монте‑Карло.
+    // fmax здесь задан как 1 (оценка сверху для функции на этом отрезке).
+    printf("calcIntegralMonteCarlo = %f\n",
+           calcIntegralMonteCarlo(-1.382683, -0.617316, 1.0f, ACCURACY_2, f));
+    // Пример: calcIntegralMonteCarlo ≈ 0.494190
+    // Точность заметно хуже, хотя ACCURACY_2 = 100000,
+    // потому что сходимость Монте‑Карло медленная: ошибка ~ 1/sqrt(n).
+
     return 0;
 }

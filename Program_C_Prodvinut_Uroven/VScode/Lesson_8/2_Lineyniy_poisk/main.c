@@ -14,26 +14,56 @@
 
 */
 
-#include <stdio.h>    // ввод-вывод (printf и др.)
-#include <math.h>
+#include <stdio.h>    // Библиотека стандартного ввода-вывода (printf и др.)
+#include <math.h>     // Математические функции: fabs и т.п.
 
+// Тип "указатель на функцию".
+// function — это тип для функций вида: float f(float x)
 typedef float(*function)(float);
 
-float rootFindLineSearch(float xl, float xr, float eps,function f) 
+/*
+ * Поиск корня функции методом "простого линейного поиска" (грубое сканирование).
+ * xl, xr — левый и правый концы интервала поиска
+ * eps    — "шаг по x": косвенно задаёт точность (чем меньше eps, тем точнее, но дольше)
+ * f      — целевая функция, чей корень ищем
+ *
+ * Идея: равномерно пройти по интервалу с шагом nextstep и
+ * найти точку, в которой |f(x)| минимально (ближе всего к нулю).
+ */
+float rootFindLineSearch(float xl, float xr, float eps, function f) 
 {
-    float x, minx = xl, nextstep;
-    nextstep = fabs(xr-xl)/(1/eps); //разбиваем на отрезки интервал
-    int stepcount=0;
-    for(x=xl; x<xr; x += nextstep, stepcount++) 
+    float x;               // Текущая проверяемая точка на интервале
+    float minx = xl;       // Точка с текущим минимальным |f(x)| (начально — левый край)
+    float nextstep;        // Шаг по x
+
+    // Вычисляем шаг.
+    // fabs(xr-xl) — длина интервала.
+    // 1/eps — количество шагов (например, eps=0.001 → 1000 шагов).
+    // Важно: 1/eps выполняется в float, т.к. eps — float.
+    nextstep = fabs(xr - xl) / (1 / eps);
+
+    int stepcount = 0;     // Счётчик сделанных шагов
+
+    // Цикл по интервалу [xl, xr) с шагом nextstep
+    for (x = xl; x < xr; x += nextstep, stepcount++) 
     {
-        if( fabs(f(x)) < fabs(f(minx)) )
+        // Если в текущей точке модуль f(x) меньше, чем в лучшей найденной ранее —
+        // обновляем minx.
+        if (fabs(f(x)) < fabs(f(minx)))
             minx = x;
     }
-    printf("\nFind root for %d steps\n",stepcount); //статистика
+
+    // Выводим статистику: сколько шагов было сделано в этом вызове
+    printf("\nFind root for %d steps\n", stepcount);
+
+    // Возвращаем x, в котором |f(x)| минимально на данном интервале
     return minx;
 }
 
-//(-2, -1.5) (-1.5, -1) (-1, -0.5) (-0.5, 0)
+// Целевая функция:
+// f(x) = 8x^4 + 32x^3 + 40x^2 + 16x + 1
+// На интервале (-2, 0) у неё 4 корня: примерно
+// (-2, -1.5), (-1.5, -1), (-1, -0.5), (-0.5, 0)
 float f(float x) 
 {
     return 8*x*x*x*x + 32*x*x*x + 40*x*x + 16*x + 1;
@@ -41,10 +71,21 @@ float f(float x)
 
 int main(void) 
 {
-    printf("Line Search root1 = %f\n",rootFindLineSearch(-2,-1.5,0.001,f)); //Line Search root1 = -1.924006
-    printf("Line Search root2 = %f\n",rootFindLineSearch(-1.5,-1,0.001,f)); //Line Search root2 = -1.382509
-    printf("Line Search root3 = %f\n",rootFindLineSearch(-1,-0.5,0.001,f)); //Line Search root3 = -0.617482
-    printf("Line Search root4 = %f\n",rootFindLineSearch(-0.5,0, 0.001,f)); //Line Search root4 = -0.076005
+    // Для каждого из отрезков вызываем rootFindLineSearch
+    // eps = 0.001 → около 1000 шагов на интервал
+    // В комментариях приведены ожидаемые результаты (примерные корни)
+
+    printf("Line Search root1 = %f\n",
+           rootFindLineSearch(-2, -1.5, 0.001, f)); // ≈ -1.924006
+
+    printf("Line Search root2 = %f\n",
+           rootFindLineSearch(-1.5, -1, 0.001, f)); // ≈ -1.382509
+
+    printf("Line Search root3 = %f\n",
+           rootFindLineSearch(-1, -0.5, 0.001, f)); // ≈ -0.617482
+
+    printf("Line Search root4 = %f\n",
+           rootFindLineSearch(-0.5, 0, 0.001, f));  // ≈ -0.076005
 
     return 0;
 }
