@@ -47,12 +47,13 @@ fʼʼ(x) = 96x^2 + 192x+80
 
 #define ACCURACY 0.001 // Точность для большинства методов (ε по x)
 #define EPS 0.0001     // Отдельная точность для комбинированного метода
+#define MAX_ITER 1000000
+#define NYUT_ETALON 1e-8f;  // высокая точность "Эталонног" метода Ньютона
 
 typedef float(*function)(float); 
 // Тип "function" — указатель на функцию вида float f(float)
 
 
-//(-2, -1.5) (-1.5, -1) (-1, -0.5) (-0.5, 0)
 //------------------------------------------------------
 // Целевая функция f(x), корни которой ищем
 //------------------------------------------------------
@@ -66,7 +67,6 @@ float f(float x)
 //  0  — если f(x) == 0
 // -1  — если f(x) < 0
 // +1  — если f(x) > 0
-// Используется в методах деления отрезка пополам
 //------------------------------------------------------
 int signF(float x, function f)
 {
@@ -74,7 +74,7 @@ int signF(float x, function f)
 }
 
 //------------------------------------------------------
-// Первая производная f'(x) — для метода Ньютона
+// Первая производная f'(x)
 // f(x)  = 8x^4 + 32x^3 + 40x^2 + 16x + 1
 // f'(x) = 32x^3 + 96x^2 + 80x + 16
 //------------------------------------------------------
@@ -84,7 +84,7 @@ float df(float x)
 }
 
 //------------------------------------------------------
-// Вторая производная f''(x) — для комбинированного метода
+// Вторая производная f''(x)
 // f'(x)  = 32x^3 + 96x^2 + 80x + 16
 // f''(x) = 96x^2 + 192x + 80
 //------------------------------------------------------
@@ -92,8 +92,6 @@ float ddf(float x)
 {
     return 96*x*x + 192*x + 80;
 }
-//------------------------------------------------------ 
-
 
 //------------------------------------------------------ 
 // Линейный поиск (грубый перебор точек на отрезке)
@@ -105,21 +103,17 @@ float rootFindLineSearch(float xl, float xr, float eps, function f)
     float nextstep;
 
     // Длину интервала делим примерно на (1/eps) шагов.
-    // Например, eps=0.001 → ~1000 шагов.
     nextstep = fabs(xr - xl) / (1 / eps);
 
     int stepcount = 0;     // счётчик шагов
 
-    // Проходим по отрезку [xl, xr) с шагом nextstep
     for (x = xl; x < xr; x += nextstep, stepcount++) 
     {
-        // Если в новой точке |f(x)| меньше, чем в лучшей найденной —
-        // обновляем minx
         if (fabs(f(x)) < fabs(f(minx)))
             minx = x;
     }
 
-    printf("\nFind root for %d steps\n", stepcount); // статистика
+    printf("Find root for %d steps\n", stepcount); // статистика
     return minx;  // точка, где |f(x)| минимально на интервале
 }
 
@@ -128,153 +122,153 @@ float rootFindLineSearch(float xl, float xr, float eps, function f)
 //------------------------------------------------------
 float rootFindDiv(float xl, float xr, float eps, function f) 
 {
-    int stepcount = 0; // число шагов
-    float xm;          // середина отрезка
+    int stepcount = 0; 
+    float xm;          
 
-    // Пока длина отрезка больше требуемой точности
     while (fabs(xr - xl) > eps) 
     { 
         stepcount++;
-        xm = (xl + xr) / 2.0f; // середина интервала
+        xm = (xl + xr) / 2.0f;
 
-        // Если знаки f(x) на xl и xm различны —
-        // корень лежит в левом подотрезке [xl, xm]
         if (signF(xl, f) != signF(xm, f))
             xr = xm;
         else
-            // иначе — в правом [xm, xr]
             xl = xm;
     }
 
-    printf("Find root for %d steps\n", stepcount); // статистика
-    return (xl + xr) / 2.0f;  // середина финального маленького интервала
+    printf("Find root for %d steps\n", stepcount);
+    return (xl + xr) / 2.0f;
 } 
 
 //------------------------------------------------------ 
-// Модифицированная бисекция (с проверкой корня на концах отрезка)
+// Модифицированная бисекция
 //------------------------------------------------------
 float rootFindDiv2(float xl, float xr, float eps, function f)
 {
-    int stepcount = 0; // число шагов
+    int stepcount = 0; 
     float xm;
 
     while (fabs(xr - xl) > eps)
     {
         stepcount++;
-        xm = (xl + xr) / 2.0f; // середина отрезка
+        xm = (xl + xr) / 2.0f;
 
-        // Если правая граница уже является корнем
         if (f(xr) == 0)
         {
-            printf("Find root for %d steps\n", stepcount);
+            printf("Find root for %d  steps\n", stepcount);
             return xr;
         }
-        // Если левая граница уже является корнем
         if (f(xl) == 0)
         {
-            printf("Find root for %d steps\n", stepcount);
+            printf("Find root for %d  steps\n", stepcount);
             return xl;
         }
 
-        // Обычная логика деления пополам
         if (signF(xl, f) != signF(xm, f))
             xr = xm;
         else
             xl = xm;
     }
 
-    printf("Find root for %d  steps\n", stepcount); // статистика
+    printf("Find root for %d  steps\n", stepcount);
     return (xl + xr) / 2.0f;
 }
 
 //------------------------------------------------------ 
-// Метод хорд (метод секущих, двухточечный)
+// Метод хорд (секущих)
 //------------------------------------------------------
 float rootFindChord(float xl, float xr, float eps, function f)
 {
     int stepcount = 0;
 
-    // Пока отрезок ещё достаточно "широк"
     while (fabs(xr - xl) > eps) 
     {
-        // Пересекаем хорду (через точки (xl, f(xl)) и (xr, f(xr)))
-        // с осью Ox и берём это пересечение как новое приближение.
-        //
-        // Здесь делаются два последовательных шага:
-        // сначала обновляется xl:
         xl = xr - (xr - xl) * f(xr) / (f(xr) - f(xl));
-
-        // потом обновляется xr, уже с учётом нового xl:
         xr = xl - (xl - xr) * f(xl) / (f(xl) - f(xr));
-
         stepcount++;
     }
 
-    printf("Find root for %d steps\n", stepcount); // статистика
-    return xr;  // возвращаем последнее приближение
+    printf("Find root for %d steps\n", stepcount);
+    return xr;
 }
 
 //------------------------------------------------------ 
 // Метод касательных (Ньютона)
-// xn  — начальное приближение
+// xn — начальное приближение
 //------------------------------------------------------
 float rootFindTangent(float xn, float eps, function f, function df)
 {
-    float x1 = xn - f(xn)/df(xn); // первое улучшение по формуле Ньютона
-    float x0 = xn;                // предыдущее значение
+    float x1 = xn - f(xn)/df(xn);
+    float x0 = xn;
     int stepcount = 0;
 
-    // Пока изменение по x больше eps — продолжаем итерации
     while (fabs(x0 - x1) > eps)
     {
         x0 = x1;
-        x1 = x1 - f(x1)/df(x1);  // формула Ньютона: x_{n+1} = x_n - f(x_n)/f'(x_n)
+        x1 = x1 - f(x1)/df(x1);
         stepcount++;
     }
 
-    printf("Find root for %d steps\n", stepcount); // статистика
-    return x1;  // найденный корень
+    printf("Find root for %d steps\n", stepcount);
+    return x1;
 }
 
 //------------------------------------------------------ 
-// Комбинированный метод (хорды + Ньютона в зависимости от знака f*f'')
-// Идея: на той границе, где f(x)*f''(x) < 0,
-//       удобнее использовать метод хорд (обеспечивает сходимость);
-// на другой — метод Ньютона, который быстрее сходится.
+// Комбинированный метод (хорды + Ньютон)
 //------------------------------------------------------
 float rootFindCombine(float xl, float xr, float eps,
                       function f, function df, function ddf) 
 {
     int stepcount = 0;
 
-    // Условие остановки: длина интервала меньше 2*eps
     while (fabs(xl - xr) > 2*eps) 
     {
-        // Для левой границы:
-        // если f(xl)*f''(xl) < 0 — используем шаг хорды
-        // иначе — шаг Ньютона
         if (f(xl) * ddf(xl) < 0)
-            xl = xl - (f(xl) * (xl - xr)) / (f(xl) - f(xr)); // шаг хорды от xl
+            xl = xl - (f(xl) * (xl - xr)) / (f(xl) - f(xr));
         else
-            xl = xl - f(xl)/df(xl);                          // шаг Ньютона от xl
+            xl = xl - f(xl)/df(xl);
 
-        // Для правой границы — аналогично
         if (f(xr) * ddf(xr) < 0)
-            xr = xr - (f(xr) * (xr - xl)) / (f(xr) - f(xl)); // шаг хорды от xr
+            xr = xr - (f(xr) * (xr - xl)) / (f(xr) - f(xl));
         else
-            xr = xr - f(xr)/df(xr);                          // шаг Ньютона от xr
+            xr = xr - f(xr)/df(xr);
 
         stepcount++;
     }
 
-    printf("Find root for %d steps\n", stepcount); // статистика
-    return (xl + xr) / 2.0f;  // середина финального интервала
+    printf("Find root for %d steps\n", stepcount);
+    return (xl + xr) / 2.0f;
 }
 
+//------------------------------------------------------ 
+// "Эталонный" метод Ньютона с очень маленьким eps
+// Используется только для получения более точного корня
+// и сравнения ошибок остальных методов
+//------------------------------------------------------
+float newtonHighPrecision(float x0, function f, function df)
+{
+    const float eps = NYUT_ETALON;  // высокая точность
+    float x1 = x0 - f(x0)/df(x0);
+    float x_prev = x0;
+    int iter = 0;
+
+    while (fabs(x1 - x_prev) > eps && iter < MAX_ITER)
+    {
+        x_prev = x1;
+        x1 = x1 - f(x1)/df(x1);
+        iter++;
+    }
+
+    if (iter == MAX_ITER) {
+        printf("WARNING: newtonHighPrecision did not converge from x0 = %f\n", x0);
+    }
+
+    return x1;
+}
 
 int main(void) 
 {
-    // Точные отрезки, на которых сидят корни (уточнены относительно (-2,0))
+    // Точные отрезки, на которых сидят корни
     const float points[4][2] = {
         { -2.0f,  -1.6f   },
         { -1.5f,  -1.0f   },
@@ -283,40 +277,53 @@ int main(void)
     };
 
     const float eps = EPS;  // точность для комбинированного метода
+    float x_true[4];
 
+    // Сначала находим "эталонные" корни с высокой точностью
     for (int i = 0; i < 4; i++)
     {
+        float mid = (points[i][0] + points[i][1]) / 2.0f;
+        x_true[i] = newtonHighPrecision(mid, f, df);
+    }
+
+    // Теперь запускаем все методы и сравниваем с эталоном
+    for (int i = 0; i < 4; i++)
+    {
+        printf("Точность для большинства методов (ε по x) = %f\n", ACCURACY);
+        printf("Точность для комбинированного метода (ε по x) = %f\n\n", EPS);
+        
         printf("------------------Root%d----------------------\n", i);
+        printf("Эталонный корень (Ньютон, eps=1e-8) ≈ %.10f\n\n", x_true[i]);
 
         // 1. Линейный поиск
-        printf("Line Search root1 = %f\n",
-               rootFindLineSearch(points[i][0], points[i][1], ACCURACY, f));
-        // Пример: Find root for 10011 steps  Line Search root1 ≈ -1.923878
+        float xr = rootFindLineSearch(points[i][0], points[i][1], ACCURACY, f);
+        printf("Line Search root  = %.6f, |error| = %.10f\n",
+               xr, fabs(xr - x_true[i]));
 
         // 2. Бисекция
-        printf("Find Div Search root1 = %f\n",
-               rootFindDiv(points[i][0], points[i][1], ACCURACY, f));
-        // Пример: ~13 шагов, root ≈ -1.923859
+        xr = rootFindDiv(points[i][0], points[i][1], ACCURACY, f);
+        printf("Bisection root    = %.6f, |error| = %.10f\n",
+               xr, fabs(xr - x_true[i]));
 
         // 3. Модифицированная бисекция
-        printf("Find Div2 Search root1 = %f\n",
-               rootFindDiv2(points[i][0], points[i][1], ACCURACY, f));
-        // Пример: те же ~13 шагов, тот же корень
+        xr = rootFindDiv2(points[i][0], points[i][1], ACCURACY, f);
+        printf("Bisection2 root   = %.6f, |error| = %.10f\n",
+               xr, fabs(xr - x_true[i]));
 
         // 4. Метод хорд
-        printf("Find Chord Search root = %f\n",
-               rootFindChord(points[i][0], points[i][1], ACCURACY, f));
-        // Пример: около 3 шагов до нужной точности
+        xr = rootFindChord(points[i][0], points[i][1], ACCURACY, f);
+        printf("Secant root       = %.6f, |error| = %.10f\n",
+               xr, fabs(xr - x_true[i]));
 
-        // 5. Метод Ньютона (касательных), стартуем с левой границы отрезка
-        printf("Find Find Tangent root = %f\n",
-               rootFindTangent(points[i][0], ACCURACY, f, df));
-        // Пример: около 3 шагов
+        // 5. Метод Ньютона (касательных)
+        xr = rootFindTangent(points[i][0], ACCURACY, f, df);
+        printf("Newton root       = %.6f, |error| = %.10f\n",
+               xr, fabs(xr - x_true[i]));
 
-        // 6. Комбинированный метод (хорды + Ньютона с учётом знака f*f'')
-        printf("Find Combine Search root = %f\n",
-               rootFindCombine(points[i][0], points[i][1], eps, f, df, ddf));
-        // Пример: несколько итераций (обычно мало), результат как у Ньютона
+        // 6. Комбинированный метод
+        xr = rootFindCombine(points[i][0], points[i][1], eps, f, df, ddf);
+        printf("Combined root     = %.6f, |error| = %.10f\n\n",
+               xr, fabs(xr - x_true[i]));
     }
 
     return 0;

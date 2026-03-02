@@ -16,149 +16,132 @@
 где p(x) — парабола.
 */
 
-#include <stdio.h>    // стандартный ввод-вывод (printf и др.)
-#include <math.h>     // математические функции (здесь напрямую почти не используются)
+#include <stdio.h>    // printf
+#include <math.h>     // pow
+#include <stdlib.h>   // size_t
 
-#define ACCURACY 1000 // Количество разбиений интервала (n). Чем больше n, тем точнее интеграл.
+#define ACCURACY   1000   // число разбиений интервала
 
-typedef float(*function)(float);
-// Тип function — указатель на функцию вида float f(float)
+typedef double (*function)(double);
+// Тип function — указатель на функцию вида double f(double)
 
-
-//------------------------------------------------------ 
+//------------------------------------------------------
 // Интегрируемая функция f(x)
 // f(x) = 8x^4 + 32x^3 + 40x^2 + 16x + 1
-// На интервале (-2, 0) она имеет несколько корней, а
-// здесь используется для вычисления площади под графиком.
 //------------------------------------------------------
-float f(float x) 
+double f(double x)
 {
-    return 8*x*x*x*x + 32*x*x*x + 40*x*x + 16*x + 1;
+    return 8.0*pow(x, 4.0) + 32.0*pow(x, 3.0) + 40.0*pow(x, 2.0) + 16.0*x + 1.0;
+    // Можно и без pow:
+    // return 8.0*x*x*x*x + 32.0*x*x*x + 40.0*x*x + 16.0*x + 1.0;
 }
 
-//------------------------------------------------------ 
-// Тестовая функция для проверки корректности методов интегрирования.
-// testf(x) = 2 (постоянная функция).
-// Интеграл по [0, 2] равен 2 * 2 = 4 — площадь прямоугольника 2×2.
 //------------------------------------------------------
-float testf(float x)
+// Метод прямоугольников (левых)
+//------------------------------------------------------
+double calcIntegralSquare(double xl, double xr, size_t n, function f)
 {
-    return 2;
-}
+    double sum = 0.0;
+    double h = (xr - xl) / (double)n;
 
-//------------------------------------------------------ 
-// Метод прямоугольников (левых прямоугольников)
-//------------------------------------------------------
-// xl, xr — пределы интегрирования
-// n      — количество подотрезков (прямоугольников)
-// f      — функция, которую интегрируем
-//
-// Идея: разбить [xl, xr] на n равных частей длиной h,
-// в каждом подотрезке взять значение f в левой точке и
-// посчитать площадь прямоугольника: f(x_i) * h.
-//------------------------------------------------------
-float calcIntegralSquare(float xl, float xr, size_t n, function f) 
-{
-    float sum = 0.0f;
-    float h = (xr - xl) / n;  // ширина одного прямоугольника
-
-    for (size_t i = 0; i < n; i++) 
-    {
-        sum += f(xl); // высота прямоугольника
-        xl += h;      // сдвигаемся к следующей левой точке
+    double x = xl;
+    for (size_t i = 0; i < n; ++i) {
+        sum += f(x);  // высота в левой точке
+        x += h;
     }
 
-    return sum * h;  // суммарная площадь всех прямоугольников
+    return sum * h;
 }
 
-//------------------------------------------------------ 
-// Метод трапеций
 //------------------------------------------------------
-// xl, xr — пределы интегрирования
-// n      — количество трапеций
-// f      — интегрируемая функция
-//
-// Каждый малый отрезок [x, x+h] заменяется трапецией
-// с основаниями f(x) и f(x+h).
-// Площадь одной трапеции: (f(x) + f(x+h)) / 2 * h.
+// Метод трапеций (классическая формула)
+// I ≈ h * [ (f(x0)+f(xn))/2 + f(x1)+...+f(x_{n-1}) ]
 //------------------------------------------------------
-float calcIntegralTrap(float xl, float xr, size_t n, function f) 
+double calcIntegralTrap(double xl, double xr, size_t n, function f)
 {
-    float sum = 0.0f;
-    float h = (xr - xl) / n;
+    double h = (xr - xl) / (double)n;
+    double sum = 0.5 * (f(xl) + f(xr));
 
-    // Цикл по внутренним точкам: от xl + h до xr - h.
-    for (float x = xl + h; x < xr - h; x += h) 
-    {
-        sum += 0.5f * h * (f(x) + f(x + h)); // площадь одной трапеции
+    for (size_t i = 1; i < n; ++i) {
+        double x = xl + i * h;
+        sum += f(x);
     }
 
-    return sum; // суммарная площадь (приближённый интеграл)
+    return sum * h;
 }
 
-//------------------------------------------------------ 
-// Метод Симпсона (параболическая интерполяция)
 //------------------------------------------------------
-// xl, xr — пределы интегрирования
-// n      — количество подотрезков (желательно чётное, но здесь
-//          шаг просто используется в формуле цикла)
-// f      — интегрируемая функция
-//
-// На каждом малом отрезке [x, x+h] интеграл аппроксимируется
-// параболой, проходящей через точки (x, f(x)), (x+h/2, f(x+h/2)),
-// (x+h, f(x+h)).
-// Формула для одного шага: h/6 * [ f(x) + 4*f(середина) + f(x+h) ].
+// Метод Симпсона
+// I ≈ h/3 * [ f(x0) + f(xn) + 4*(сумма по нечётным) + 2*(по чётным) ]
+// Требует чётного n.
 //------------------------------------------------------
-float calcIntegralSimpson(float xl, float xr, size_t n, function f) 
+double calcIntegralSimpson(double xl, double xr, size_t n, function f)
 {
-    float sum = 0.0f;
-    float h = (xr - xl) / n;
-
-    for (float x = xl + h; x < xr - h; x += h) 
-    {
-        float mid = 0.5f * (x + x + h); // середина отрезка [x, x+h], т.е. x + h/2
-        sum += h / 6.0f * (f(x) + 4.0f * f(mid) + f(x + h));
+    if (n % 2 == 1) {
+        ++n; // делаем n чётным
     }
 
-    return sum;
-}
+    double h = (xr - xl) / (double)n;
+    double sum = f(xl) + f(xr);
 
-int main(void) 
-{
-    // 1. Тест интегрирования константы 2 по [0, 2].
-    // Ожидаемый интеграл: 4.0.
-    printf("calcIntegralSquare integral %f\n",
-           calcIntegralSquare(0, 2, ACCURACY, testf));
-    // Результат в комментарии:
-    // calcIntegralSquare integral 4.000000
-
-    /*
-        Тестовая функция:
-
-        float testf(float x)
-        {
-            return 2;
+    for (size_t i = 1; i < n; ++i) {
+        double x = xl + i * h;
+        if (i % 2 == 0) {
+            sum += 2.0 * f(x);  // чётные
+        } else {
+            sum += 4.0 * f(x);  // нечётные
         }
+    }
 
-        Её интеграл по [0, 2] даёт площадь прямоугольника 2×2 = 4.
+    return sum * h / 3.0;
+}
+
+int main(void)
+{
+    size_t n = ACCURACY;
+    double a = -1.382683;
+    double b = -0.617316;
+
+    printf("Число разбиений интервала для всех методов = %zu\n", n);
+
+    double I_square  = calcIntegralSquare(a, b, n, f);
+    double I_trap    = calcIntegralTrap(a, b, n, f);
+    double I_simpson = calcIntegralSimpson(a, b, n, f);
+
+    printf("calcIntegralSquare  = %.10f\n", I_square);
+    printf("calcIntegralTrap    = %.10f\n", I_trap);
+    printf("calcIntegralSimpson = %.10f\n", I_simpson);
+    /*
+    вычислили какой метод точнее производит вычисления:
+
+    Число разбиений интервала для всех методов = 100
+    calcIntegralSquare  = 0.4926934965
+    calcIntegralTrap    = 0.4926934799
+    calcIntegralSimpson = 0.4927357535
+
+    Число разбиений интервала для всех методов = 1000
+    calcIntegralSquare  = 0.4927353296
+    calcIntegralTrap    = 0.4927353280
+    calcIntegralSimpson = 0.4927357507
+
+    Число разбиений интервала для всех методов = 10000
+    calcIntegralSquare  = 0.4927357466
+    calcIntegralTrap    = 0.4927357464
+    calcIntegralSimpson = 0.4927357507
+
+    Число разбиений интервала для всех методов = 100000
+    calcIntegralSquare  = 0.4927357506
+    calcIntegralTrap    = 0.4927357506
+    calcIntegralSimpson = 0.4927357507
+
+    Число разбиений интервала для всех методов = 1000000
+    calcIntegralSquare  = 0.4927357507
+    calcIntegralTrap    = 0.4927357507
+    calcIntegralSimpson = 0.4927357507
+
+    Вывод: Метод Симпсона обладает самой высокой точностью вычислений
+    Уже на 1000 разбиений интервала он оказывается самым точным
     */
-
-    // 2. Интеграл исходной функции f(x) на отрезке [-1.382683, -0.617316].
-    // В комментариях отмечено, что это площадь "половины лепестка синусоиды"
-    // выше оси Ox (то есть положительная часть под графиком).
-    printf("calcIntegralSquare = %f\n",
-           calcIntegralSquare(-1.382683, -0.617316, ACCURACY, f));
-    // calcIntegralSquare = 0.492744
-
-    // 3. Тот же интеграл методом трапеций.
-    printf("calcIntegralTrap = %f\n",
-           calcIntegralTrap(-1.382683, -0.617316, ACCURACY, f));
-    // calcIntegralTrap = 0.492743
-
-    // 4. Тот же интеграл методом Симпсона.
-    printf("calcIntegralSimpson = %f\n",
-           calcIntegralSimpson(-1.382683, -0.617316, ACCURACY, f));
-    // calcIntegralSimpson = 0.492743
 
     return 0;
 }
