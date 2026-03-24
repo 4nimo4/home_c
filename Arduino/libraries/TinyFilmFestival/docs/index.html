@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TinyFilmFestival - Arduino LED Matrix Library</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/toolbar/prism-toolbar.min.css">
+</head>
+<body>
+    <!-- Mobile Header -->
+    <header class="mobile-header">
+        <button class="menu-toggle" aria-label="Toggle menu">
+            <span class="hamburger"></span>
+        </button>
+        <h1>TinyFilmFestival</h1>
+    </header>
+
+    <!-- Sidebar Navigation -->
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h1>TinyFilmFestival <span class="version-badge">v2.5.1</span></h1>
+            <p class="tagline">Arduino LED Matrix Library</p>
+        </div>
+
+        <div class="search-container">
+            <input type="text" id="search-input" placeholder="Search API..." autocomplete="off">
+            <div id="search-results" class="search-results"></div>
+        </div>
+
+        <div class="nav-section">
+            <h3>Getting Started</h3>
+            <ul>
+                <li><a href="#" data-page="home" class="active">Overview</a></li>
+                <li><a href="#" data-page="installation">Installation</a></li>
+                <li><a href="#" data-page="quick-start">Quick Start</a></li>
+                <li><a href="#" data-page="editor-guide">LED Matrix Editor</a></li>
+            </ul>
+        </div>
+
+        <div class="nav-section">
+            <h3>API Reference</h3>
+            <ul>
+                <li><a href="#" data-page="simple-led">Simple LED Mode</a></li>
+                <li><a href="#" data-page="led-blink">LED Blink</a></li>
+                <li><a href="#" data-page="animation-mode">Animation Mode</a></li>
+                <li><a href="#" data-page="canvas-mode">Canvas Mode</a></li>
+                <li><a href="#" data-page="hybrid-mode">Hybrid Mode</a></li>
+            </ul>
+        </div>
+
+        <div class="nav-section">
+            <h3>Examples</h3>
+            <ul>
+                <li class="nav-expandable">
+                    <a href="#" class="nav-expand-toggle" data-page="examples-basics">
+                        <span class="expand-icon">›</span> Basics
+                    </a>
+                    <ul class="nav-subitems">
+                        <li><a href="#" data-page="example-simple-led">SimpleLED</a></li>
+                        <li><a href="#" data-page="example-blink-frame">BlinkFrame</a></li>
+                        <li><a href="#" data-page="example-first-animation">FirstAnimation</a></li>
+                        <li><a href="#" data-page="example-first-canvas">FirstCanvas</a></li>
+                    </ul>
+                </li>
+                <li class="nav-expandable">
+                    <a href="#" class="nav-expand-toggle" data-page="examples-animation">
+                        <span class="expand-icon">›</span> Animation Mode
+                    </a>
+                    <ul class="nav-subitems">
+                        <li><a href="#" data-page="example-layered-animations">LayeredAnimations</a></li>
+                        <li><a href="#" data-page="example-playback-control">PlaybackControl</a></li>
+                        <li><a href="#" data-page="example-positioned-animation">PositionedAnimation</a></li>
+                    </ul>
+                </li>
+                <li class="nav-expandable">
+                    <a href="#" class="nav-expand-toggle" data-page="examples-canvas">
+                        <span class="expand-icon">›</span> Canvas Mode
+                    </a>
+                    <ul class="nav-subitems">
+                        <li><a href="#" data-page="example-scrolling-text">ScrollingText</a></li>
+                        <li><a href="#" data-page="example-moving-shapes">MovingShapes</a></li>
+                        <li><a href="#" data-page="example-layered-graphics">LayeredGraphics</a></li>
+                    </ul>
+                </li>
+                <li class="nav-expandable">
+                    <a href="#" class="nav-expand-toggle" data-page="examples-hybrid">
+                        <span class="expand-icon">›</span> Hybrid Mode
+                    </a>
+                    <ul class="nav-subitems">
+                        <li><a href="#" data-page="example-animation-overlay">AnimationWithOverlay</a></li>
+                    </ul>
+                </li>
+                <li class="nav-expandable">
+                    <a href="#" class="nav-expand-toggle" data-page="examples-canvas-animation">
+                        <span class="expand-icon">›</span> Canvas Animation
+                    </a>
+                    <ul class="nav-subitems">
+                        <li><a href="#" data-page="example-ease-demo">EaseDemo</a></li>
+                        <li><a href="#" data-page="example-oscillator-demo">OscillatorDemo</a></li>
+                        <li><a href="#" data-page="example-smooth-animation">SmoothAnimation</a></li>
+                    </ul>
+                </li>
+                <li class="nav-expandable">
+                    <a href="#" class="nav-expand-toggle" data-page="examples-utilities">
+                        <span class="expand-icon">›</span> Utilities
+                    </a>
+                    <ul class="nav-subitems">
+                        <li><a href="#" data-page="example-drawing-test">DrawingTest</a></li>
+                        <li><a href="#" data-page="example-hybrid-test">HybridTest</a></li>
+                        <li><a href="#" data-page="example-animation-test">AnimationTest</a></li>
+                        <li><a href="#" data-page="example-playback-test">PlaybackTest</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+
+        <div class="nav-section">
+            <h3>Resources</h3>
+            <ul>
+                <li><a href="#" data-page="deprecated">V1 Deprecated Methods</a></li>
+                <li><a href="https://github.com/DigitalFuturesOCADU/TinyFilmFestival" target="_blank">GitHub Repository ↗</a></li>
+                <li><a href="https://ledmatrix-editor.arduino.cc/" target="_blank">LED Matrix Editor ↗</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Overlay for mobile -->
+    <div class="sidebar-overlay" id="overlay"></div>
+
+    <!-- Main Content -->
+    <main class="content" id="content">
+        <!-- Content will be loaded dynamically -->
+    </main>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-c.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-cpp.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-arduino.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/toolbar/prism-toolbar.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/copy-to-clipboard/prism-copy-to-clipboard.min.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

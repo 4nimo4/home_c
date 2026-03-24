@@ -1,0 +1,151 @@
+# Syntax Coloring Map For TinyFilmFestival
+
+# Datatypes (KEYWORD1)
+TinyScreen	KEYWORD1
+TinyFilmFestival	KEYWORD1
+Animation	KEYWORD1
+AnimationLayer	KEYWORD1
+AnimationState	KEYWORD1
+PlayMode	KEYWORD1
+CombinedFilmFestival	KEYWORD1
+Ease	KEYWORD1
+
+# Methods and Functions (KEYWORD2)
+
+# Initialization
+begin	KEYWORD2
+
+# Animation Utilities
+oscillate	KEYWORD2
+oscillateInt	KEYWORD2
+to	KEYWORD2
+value	KEYWORD2
+intValue	KEYWORD2
+done	KEYWORD2
+moving	KEYWORD2
+jump	KEYWORD2
+target	KEYWORD2
+
+# Animation Playback
+play	KEYWORD2
+startAnimation	KEYWORD2
+pause	KEYWORD2
+resume	KEYWORD2
+stop	KEYWORD2
+update	KEYWORD2
+
+# Speed Control
+setSpeed	KEYWORD2
+restoreOriginalSpeed	KEYWORD2
+getCurrentSpeed	KEYWORD2
+
+# Layered Animations
+addLayer	KEYWORD2
+playOnLayer	KEYWORD2
+setSpeedOnLayer	KEYWORD2
+pauseLayer	KEYWORD2
+resumeLayer	KEYWORD2
+stopLayer	KEYWORD2
+
+# Status
+isPlaying	KEYWORD2
+isPaused	KEYWORD2
+isComplete	KEYWORD2
+isIdle	KEYWORD2
+isCustomSpeedActive	KEYWORD2
+isPlayingBackwards	KEYWORD2
+getState	KEYWORD2
+getCurrentFrame	KEYWORD2
+getTotalFrames	KEYWORD2
+getStartFrame	KEYWORD2
+getEndFrame	KEYWORD2
+
+# Canvas Mode - Drawing Control
+beginDraw	KEYWORD2
+endDraw	KEYWORD2
+clear	KEYWORD2
+background	KEYWORD2
+
+# Canvas Mode - Style
+stroke	KEYWORD2
+noStroke	KEYWORD2
+fill	KEYWORD2
+noFill	KEYWORD2
+
+# Canvas Mode - Shapes
+set	KEYWORD2
+point	KEYWORD2
+line	KEYWORD2
+rect	KEYWORD2
+circle	KEYWORD2
+ellipse	KEYWORD2
+
+# Simple LED Control (digitalWrite-style)
+led	KEYWORD2
+getLed	KEYWORD2
+toggle	KEYWORD2
+show	KEYWORD2
+clearLeds	KEYWORD2
+ledBegin	KEYWORD2
+ledWrite	KEYWORD2
+ledRead	KEYWORD2
+ledToggle	KEYWORD2
+ledClear	KEYWORD2
+ledShow	KEYWORD2
+getLedMatrix	KEYWORD2
+
+# Canvas Mode - Text
+text	KEYWORD2
+textFont	KEYWORD2
+textFontWidth	KEYWORD2
+textFontHeight	KEYWORD2
+beginText	KEYWORD2
+endText	KEYWORD2
+textScrollSpeed	KEYWORD2
+print	KEYWORD2
+println	KEYWORD2
+
+# Canvas Mode - Matrix Info
+width	KEYWORD2
+height	KEYWORD2
+
+# Hybrid Mode
+beginOverlay	KEYWORD2
+endOverlay	KEYWORD2
+
+# Advanced
+displayFrame	KEYWORD2
+getMatrix	KEYWORD2
+
+# Deprecated (still work)
+isPausedState	KEYWORD2
+sequenceDone	KEYWORD2
+
+# Constants (LITERAL1)
+LOOP	LITERAL1
+ONCE	LITERAL1
+BOOMERANG	LITERAL1
+PLAY_ONCE	LITERAL1
+PLAY_LOOP	LITERAL1
+PLAY_BOOMERANG	LITERAL1
+
+# Animation States
+IDLE	LITERAL1
+PLAYING	LITERAL1
+PAUSED	LITERAL1
+COMPLETED	LITERAL1
+
+# LED States (simple ON/OFF)
+ON	LITERAL1
+OFF	LITERAL1
+
+# Scroll Directions
+NO_SCROLL	LITERAL1
+SCROLL_LEFT	LITERAL1
+SCROLL_RIGHT	LITERAL1
+SCROLL_UP	LITERAL1
+SCROLL_DOWN	LITERAL1
+
+# Fonts
+Font_4x6	LITERAL1
+Font_5x7	LITERAL1
